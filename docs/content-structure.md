@@ -2,13 +2,21 @@
 
 ## 목적
 
-이 플랫폼은 도시계획기사 실기 시험 대비를 위한 문제풀이 서비스다. 따라서 콘텐츠는 단순 요약자료가 아니라, 시험 대비 흐름에 맞게 분류되어야 한다.
+이 플랫폼은 도시계획기사 실기 시험 대비를 위한 CBT 문제풀이 서비스다. 따라서 콘텐츠 명칭과 데이터 분류는 실제 앱 안의 구성과 맞춰 관리한다.
 
-## 최상위 콘텐츠 구분
+중요한 기준은 다음과 같다.
 
-### 1. 년도별 복원문제(기출)
+- 앱 전체가 CBT 플랫폼이다.
+- 앱 안에 `년도별 기출`, `기출 섞어풀기`, `모의고사`, `OX`, `연습`, `오답/북마크/통계` 같은 풀이 모드가 있다.
+- 데이터는 실제 기출/복원문제와 창작형 모의고사/연습문제를 분리해서 관리한다.
 
-실제 시험 회차를 기준으로 구성한다.
+---
+
+## 앱 내 구성 기준
+
+### 1. 년도별 기출
+
+회차별 기출·복원문제를 그대로 푸는 모드다.
 
 예시:
 
@@ -22,9 +30,9 @@
 
 사용 목적:
 
-- 실제 기출 흐름 확인
+- 실제 시험 회차 흐름 확인
 - 회차별 문제 풀이
-- 기출 복원자료 학습
+- 복원 기출 학습
 
 등록 기준:
 
@@ -38,31 +46,36 @@
 ```js
 sourceType: 'reconstructed'
 contentGroup: 'past_exam'
+modeGroup: 'yearly_exam'
 exam: '2020년 1회'
+cbtEligible: true
 ```
 
 ---
 
-### 2. CBT
+### 2. 기출 섞어풀기
 
-년도별 기출·복원문제를 섞어서 푸는 모드다.
+여러 연도의 기출·복원문제를 섞어서 푸는 모드다.
+
+주의: 앱 전체 이름이 CBT이므로, 이 모드를 문서에서 단순히 `CBT`라고 부르면 혼동된다. 문서상 명칭은 `기출 섞어풀기`로 둔다. 실제 UI 명칭은 앱 코드에 맞춰 최종 확정한다.
 
 사용 목적:
 
-- 실전처럼 랜덤 풀이
-- 여러 연도 기출 혼합 연습
+- 여러 연도 기출 랜덤 풀이
+- 실전 감각 유지
 - 약점 유형 반복
 
 등록 기준:
 
-- `년도별 복원문제(기출)` 데이터 중 출제 가능성이 높은 문제를 사용
+- `년도별 기출` 데이터 중 섞어풀기에 적합한 문제를 사용
 - 실제 기출 또는 복원문제 기반이어야 함
-- 교육자료 기반 창작문제는 CBT 기본 풀에 섞지 않음
+- 교육자료 기반 창작문제는 기본 기출 섞어풀기 풀에 섞지 않음
 
 데이터 속성 예시:
 
 ```js
 contentGroup: 'past_exam'
+modeGroup: 'mixed_exam'
 cbtEligible: true
 ```
 
@@ -90,12 +103,41 @@ cbtEligible: true
 ```js
 sourceType: 'derived'
 contentGroup: 'mock_exam'
+modeGroup: 'mock_exam'
 exam: '모의고사 1회'
+cbtEligible: false
 ```
 
 ---
 
-### 4. 연습문제
+### 4. OX
+
+기출·복원문제 또는 핵심 개념을 OX형으로 변환한 빠른 확인 모드다.
+
+사용 목적:
+
+- 짧은 시간에 개념 확인
+- 헷갈리는 법령·수치·정의 확인
+- 이동 중 반복 학습
+
+등록 기준:
+
+- 실제 회차형 기출문제와 구분한다.
+- OX 전용 문항은 `contentGroup: 'ox'` 또는 `modeGroup: 'ox'`로 관리한다.
+- 기존 기출의 해설을 자동 변환해 생성하는 경우 원본 문제 ID를 연결한다.
+
+데이터 속성 예시:
+
+```js
+sourceType: 'derived'
+contentGroup: 'ox'
+modeGroup: 'ox'
+originQuestionId: 20200323
+```
+
+---
+
+### 5. 연습
 
 개념 암기, 키워드 확인, 계산 공식 연습용 문제다.
 
@@ -116,12 +158,35 @@ exam: '모의고사 1회'
 ```js
 sourceType: 'practice'
 contentGroup: 'practice'
+modeGroup: 'practice'
 exam: '연습문제'
+cbtEligible: false
 ```
 
 ---
 
-### 5. 핵심정리 / 해설
+### 6. 오답 / 북마크 / 통계
+
+문제 원천 데이터가 아니라 사용자 풀이 기록을 기반으로 하는 학습 보조 기능이다.
+
+사용 목적:
+
+- 틀린 문제 재풀이
+- 북마크 문제 모아보기
+- 취약 단원 확인
+- 점수 추이 확인
+
+데이터 속성 예시:
+
+```js
+answerHistory
+bookmarks
+weakCategories
+```
+
+---
+
+### 7. 핵심정리 / 해설
 
 문제 자체가 아니라 해설·요약·암기 보조 콘텐츠다.
 
@@ -141,6 +206,7 @@ exam: '연습문제'
 
 ```js
 contentGroup: 'summary'
+modeGroup: 'summary'
 ```
 
 ---
@@ -152,6 +218,7 @@ contentGroup: 'summary'
   id: 20200101,
   exam: '2020년 1회',
   contentGroup: 'past_exam',
+  modeGroup: 'yearly_exam',
   sourceType: 'reconstructed',
   cbtEligible: true,
   category: '도시설계',
@@ -182,7 +249,7 @@ contentGroup: 'summary'
 
 ### derived
 
-복원문제, 교육자료, 법령자료를 바탕으로 새로 만든 모의고사형 문제.
+복원문제, 교육자료, 법령자료를 바탕으로 새로 만든 모의고사형/OX형 문제.
 
 ### practice
 
@@ -192,11 +259,15 @@ contentGroup: 'summary'
 
 ### past_exam
 
-년도별 복원문제(기출) 및 CBT에 활용할 기출 기반 문제.
+년도별 기출 및 기출 섞어풀기에 활용할 기출 기반 문제.
 
 ### mock_exam
 
 모의고사 문제.
+
+### ox
+
+OX 전용 문제.
 
 ### practice
 
@@ -206,11 +277,42 @@ contentGroup: 'summary'
 
 핵심정리, 해설, 암기카드 등 문제 외 콘텐츠.
 
+## modeGroup 구분
+
+### yearly_exam
+
+년도별 기출 모드.
+
+### mixed_exam
+
+기출 섞어풀기 모드.
+
+### mock_exam
+
+모의고사 모드.
+
+### ox
+
+OX 모드.
+
+### practice
+
+연습 모드.
+
+### review
+
+오답·북마크·약점 복습 모드.
+
+### summary
+
+핵심정리/해설 모드.
+
 ## 앞으로의 업데이트 원칙
 
-1. 기출 업데이트는 `past_exam`에만 넣는다.
-2. 교육자료 기반 창작 문제는 `mock_exam` 또는 `practice`로만 넣는다.
-3. 요약형 문장은 기출문제로 넣지 않는다.
-4. 오래된 복원자료에서 원문이 불명확하면 `reconstructed`로 표시한다.
-5. 원문 확인이 불가능한 개념형 문제는 `practice` 또는 `summary`로 분리한다.
-6. CBT 모드는 기본적으로 `contentGroup: 'past_exam'`이면서 `cbtEligible: true`인 문제만 사용한다.
+1. 기출 업데이트는 `contentGroup: 'past_exam'`에만 넣는다.
+2. 기출 섞어풀기는 `past_exam` 중 `cbtEligible: true`만 사용한다.
+3. 교육자료 기반 창작 문제는 `mock_exam`, `ox`, `practice`로만 넣는다.
+4. 요약형 문장은 기출문제로 넣지 않는다.
+5. 오래된 복원자료에서 원문이 불명확하면 `reconstructed`로 표시한다.
+6. 원문 확인이 불가능한 개념형 문제는 `practice` 또는 `summary`로 분리한다.
+7. 앱 내 최종 메뉴명은 코드/UI에 맞춰 확정하고, 문서 명칭도 그에 맞춰 동기화한다.
