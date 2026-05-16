@@ -5,45 +5,24 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
-const updatesDir = path.join(root, 'src', 'data', 'updates');
+const updatesIndexPath = path.join(root, 'src', 'data', 'updates', 'index.js');
 const outDir = path.join(root, 'tmp');
 const outPath = path.join(outDir, 'question-update-candidates.json');
 
-const updateFiles = [
-  'questions-2020.js',
-  'questions-2019.js',
-  'questions-2018.js',
-  'questions-2017.js',
-  'questions-2016.js',
-  'questions-2011.js',
-];
-
-function getDefaultExportName(fileName) {
-  return fileName
-    .replace('questions-', 'QUESTIONS_')
-    .replace('.js', '_UPDATE')
-    .replace('-', '_')
-    .toUpperCase();
+if (!fs.existsSync(updatesIndexPath)) {
+  console.error('업데이트 인덱스 파일을 찾을 수 없습니다: src/data/updates/index.js');
+  process.exit(1);
 }
 
+const mod = await import(pathToFileURL(updatesIndexPath).href);
+const byYear = mod.QUESTION_UPDATES_BY_YEAR || {};
 const all = [];
-const missing = [];
 
-for (const fileName of updateFiles) {
-  const filePath = path.join(updatesDir, fileName);
-  if (!fs.existsSync(filePath)) {
-    missing.push(fileName);
-    continue;
-  }
-
-  const mod = await import(pathToFileURL(filePath).href);
-  const exportName = getDefaultExportName(fileName);
-  const questions = mod[exportName] || mod.default || [];
-
+for (const [year, questions] of Object.entries(byYear)) {
   for (const question of questions) {
     all.push({
       ...question,
-      updateSourceFile: fileName,
+      updateSourceYear: year,
     });
   }
 }
@@ -53,20 +32,35 @@ const duplicatedIds = [];
 
 for (const question of all) {
   if (ids.has(question.id)) {
-    duplicatedIds.push({ id: question.id, files: [ids.get(question.id), question.updateSourceFile] });
+    duplicatedIds.push({ id: question.id, years: [ids.get(question.id), question.updateSourceYear] });
   } else {
-    ids.set(question.id, question.updateSourceFile);
+    ids.set(question.id, question.updateSourceYear);
   }
 }
 
 fs.mkdirSync(outDir, { recursive: true });
-fs.writeFileSync(outPath, JSON.stringify({ count: all.length, missing, duplicatedIds, questions: all }, null, 2), 'utf8');
+fs.writeFileSync(
+  outPath,
+  JSON.stringify(
+    {
+      count: all.length,
+      years: Object.fromEntries(
+        Object.entries(byYear).map(([year, questions]) => [year, questions.length]),
+      ),
+      duplicatedIds,
+      questions: all,
+    },
+    null,
+    2,
+  ),
+  'utf8',
+);
 
 console.log(`후보 문제 수: ${all.length}`);
-if (missing.length) console.log(`아직 병합되지 않은 파일: ${missing.join(', ')}`);
+console.log(`연도별 후보 수: ${Object.entries(byYear).map(([year, questions]) => `${year}:${questions.length}`).join(', ')}`);
 if (duplicatedIds.length) {
   console.log('ID 중복 발견:');
-  for (const item of duplicatedIds) console.log(`- ${item.id}: ${item.files.join(' / ')}`);
+  for (const item of duplicatedIds) console.log(`- ${item.id}: ${item.years.join(' / ')}`);
 } else {
   console.log('ID 중복 없음');
 }
