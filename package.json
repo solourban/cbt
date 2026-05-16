@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/build-static.mjs",
+    "build:vite": "vite build",
     "preview": "vite preview",
     "test:scoring": "node src/lib/scoring.test.js",
     "migrate:questions": "node scripts/migrate-questions.mjs",
