@@ -24,3 +24,14 @@ const CONFIG = {
   siteUrl: "cafe.naver.com/solourban",
   footerText: "made by 네이버 도시계획기사 독학카페",
 };
+
+// 기존 정적 HTML 앱은 questions.js를 직접 로드합니다.
+// Vite 전환 전까지는 우선 병합 기출 후보를 별도 런타임 파일로 붙입니다.
+// defer 스크립트는 HTML 파싱 후 실행되므로 questions.js와 Babel 앱 실행 사이에 반영됩니다.
+(function loadLegacyQuestionUpdates(){
+  if (typeof document === "undefined") return;
+  const script = document.createElement("script");
+  script.src = "question-updates.js";
+  script.defer = true;
+  document.head.appendChild(script);
+})();
