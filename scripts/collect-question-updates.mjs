@@ -6,6 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
 const updatesIndexPath = path.join(root, 'src', 'data', 'updates', 'index.js');
+const mergeSelectionPath = path.join(root, 'src', 'data', 'updates', 'merge-selection.js');
 const outDir = path.join(root, 'tmp');
 const outPath = path.join(outDir, 'question-update-candidates.json');
 
@@ -38,6 +39,17 @@ for (const question of all) {
   }
 }
 
+let mergeSelection = null;
+if (fs.existsSync(mergeSelectionPath)) {
+  const selectionMod = await import(pathToFileURL(mergeSelectionPath).href);
+  mergeSelection = {
+    summary: selectionMod.MERGE_SELECTION_SUMMARY,
+    priorityIds: selectionMod.PRIORITY_UPDATE_IDS,
+    holdIds: selectionMod.HOLD_UPDATE_IDS,
+    unclassifiedIds: selectionMod.UNCLASSIFIED_QUESTION_UPDATES.map((question) => question.id),
+  };
+}
+
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(
   outPath,
@@ -48,6 +60,7 @@ fs.writeFileSync(
         Object.entries(byYear).map(([year, questions]) => [year, questions.length]),
       ),
       duplicatedIds,
+      mergeSelection,
       questions: all,
     },
     null,
@@ -58,6 +71,11 @@ fs.writeFileSync(
 
 console.log(`후보 문제 수: ${all.length}`);
 console.log(`연도별 후보 수: ${Object.entries(byYear).map(([year, questions]) => `${year}:${questions.length}`).join(', ')}`);
+if (mergeSelection) {
+  console.log(`우선 병합 후보: ${mergeSelection.summary.priorityCount}`);
+  console.log(`보류 후보: ${mergeSelection.summary.holdCount}`);
+  console.log(`미분류 후보: ${mergeSelection.summary.unclassifiedCount}`);
+}
 if (duplicatedIds.length) {
   console.log('ID 중복 발견:');
   for (const item of duplicatedIds) console.log(`- ${item.id}: ${item.years.join(' / ')}`);
