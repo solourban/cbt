@@ -8,12 +8,57 @@ const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
 const dist = path.join(root, 'dist');
 
-const requiredFiles = ['index.html', 'config.js'];
+const requiredFiles = ['config.js'];
+const legacyIndexPath = path.join(root, 'index.html');
+const distIndexPath = path.join(dist, 'index.html');
 const legacyQuestionsPath = path.join(root, 'questions.js');
 const distQuestionsPath = path.join(dist, 'questions.js');
 
+function patchLegacyIndex(source) {
+  const safeShortAnswerScorer = `function grS(q,a){
+  const c=(a||"").trim().replace(/\\s+/g,"").replace(/[()（）]/g,"").toLowerCase();
+  if(!c)return{s:0,m:q.points,fb:[]};
+  const has=(kw)=>{
+    const kk=String(kw||"").replace(/\\s+/g,"").toLowerCase();
+    if(!kk)return false;
+    if(kk.length<=2||/^\\d+$/.test(kk)){
+      const safe=kk.replace(/[.*+?^\${}()|[\\]\\\\]/g,"\\\\$&");
+      return c===kk||new RegExp("(?:^|[^0-9a-zA-Z가-힣])"+safe+"(?:$|[^0-9a-zA-Z가-힣])").test(c);
+    }
+    return c.includes(kk);
+  };
+  const r=q.keywords?.required||[];
+  if(q.acceptedAnswers?.length){
+    for(const ac of q.acceptedAnswers){
+      if(ac.every(x=>has(x)))return{s:q.points,m:q.points,fb:["정답입니다!"]};
+    }
+  }
+  const mt=r.filter(has),ms=r.filter(k=>!has(k)),bn=(q.keywords?.bonus||[]).filter(has);
+  const rt=r.length>0?mt.length/r.length:0,sc=Math.round(q.points*rt),fb=[];
+  if(mt.length)fb.push("✓ "+mt.join(", "));
+  if(ms.length)fb.push("✗ "+ms.join(", "));
+  if(bn.length)fb.push("+ "+bn.join(", "));
+  return{s:sc,m:q.points,fb};
+}
+`;
+
+  const patched = source.replace(/function grS\(q,a\)\{[\s\S]*?\nfunction grE\(q,a\)\{/, `${safeShortAnswerScorer}function grE(q,a){`);
+  if (patched === source) {
+    console.warn('Legacy short-answer scorer patch was not applied.');
+  }
+  return patched;
+}
+
 fs.rmSync(dist, { recursive: true, force: true });
 fs.mkdirSync(dist, { recursive: true });
+
+if (!fs.existsSync(legacyIndexPath)) {
+  console.error('Required file missing: index.html');
+  process.exit(1);
+}
+
+const patchedIndexSource = patchLegacyIndex(fs.readFileSync(legacyIndexPath, 'utf8'));
+fs.writeFileSync(distIndexPath, patchedIndexSource, 'utf8');
 
 for (const fileName of requiredFiles) {
   const source = path.join(root, fileName);
@@ -55,6 +100,6 @@ const mergedQuestionsSource = `${legacyQuestionsSource}
 fs.writeFileSync(distQuestionsPath, mergedQuestionsSource, 'utf8');
 
 console.log('Static legacy build complete.');
-console.log(`Copied files: ${requiredFiles.join(', ')}`);
+console.log('Copied files: index.html, config.js');
 console.log(`Merged priority updates into questions.js: ${PRIORITY_QUESTION_UPDATES.length}`);
 console.log(`Selection summary: ${JSON.stringify(MERGE_SELECTION_SUMMARY)}`);
