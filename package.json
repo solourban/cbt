@@ -11,7 +11,8 @@
     "test:scoring": "node src/lib/scoring.test.js",
     "migrate:questions": "node scripts/migrate-questions.mjs",
     "collect:updates": "node scripts/collect-question-updates.mjs",
-    "check:merge-selection": "node scripts/check-merge-selection.mjs"
+    "check:merge-selection": "node scripts/check-merge-selection.mjs",
+    "check:static-build": "node scripts/check-static-build.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
