@@ -1,0 +1,135 @@
+name: QA Bug Report
+description: CBT 서비스 수동 QA 중 발견한 오류를 기록합니다.
+title: "[QA] "
+labels: ["qa", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        서비스 전체 QA 중 발견한 오류를 기록합니다.
+        같은 오류는 `docs/qa-issues.md`에도 BUG 번호로 함께 관리합니다.
+
+  - type: input
+    id: bug_id
+    attributes:
+      label: BUG 번호
+      description: 예) BUG-002. 아직 번호가 없으면 비워두세요.
+      placeholder: BUG-002
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 우선순위
+      options:
+        - P0 - 서비스 전체 막힘
+        - P1 - 핵심 기능 막힘
+        - P2 - 품질 저하
+        - P3 - 장기 개선
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 구분
+      options:
+        - 기출
+        - 모의고사
+        - 약점집중
+        - 데일리드릴
+        - OX
+        - 플래시카드
+        - 검색
+        - 북마크
+        - 오답노트
+        - 통계/진도
+        - 유료인증
+        - 광고
+        - 배포/빌드
+        - 모바일/반응형
+        - 기타
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: 위치
+      description: 오류가 발생한 화면, 연도, 문제번호 등을 적어주세요.
+      placeholder: 예) 2016년 기출복원 1번
+    validations:
+      required: true
+
+  - type: textarea
+    id: input_value
+    attributes:
+      label: 입력값
+      description: 답안, 검색어, 코드 등 입력한 값이 있으면 적어주세요.
+      placeholder: 예) 수용, 사용방식, 환지방식
+    validations:
+      required: false
+
+  - type: textarea
+    id: symptom
+    attributes:
+      label: 증상
+      description: 실제로 어떤 문제가 발생했는지 적어주세요.
+      placeholder: 예) 공란은 채점되지만 텍스트 입력 후 채점 버튼을 누르면 반응 없음
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 예상 동작
+      description: 원래 어떻게 동작해야 하는지 적어주세요.
+      placeholder: 예) 부분점수 또는 오답 피드백 표시
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 재현 방법
+      description: 오류를 다시 발생시키는 순서를 적어주세요.
+      placeholder: |
+        1. 배포 화면 접속
+        2. 2016년 기출복원 진입
+        3. 답안 입력
+        4. 채점 버튼 클릭
+    validations:
+      required: true
+
+  - type: textarea
+    id: console_error
+    attributes:
+      label: Console 오류
+      description: 개발자도구 Console에 표시된 오류가 있으면 붙여넣어 주세요.
+      render: shell
+    validations:
+      required: false
+
+  - type: dropdown
+    id: suspected_cause
+    attributes:
+      label: 추정 원인
+      options:
+        - 데이터 오류
+        - 채점함수 오류
+        - 화면상태 오류
+        - localStorage 저장 오류
+        - 배포 오류
+        - 정책/운영 오류
+        - 알 수 없음
+    validations:
+      required: true
+
+  - type: textarea
+    id: note
+    attributes:
+      label: 비고
+      description: 추가 설명, 캡처 설명, 관련 문서 링크 등을 적어주세요.
+    validations:
+      required: false
