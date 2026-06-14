@@ -26,9 +26,9 @@ export function hasKeyword(answer, keyword) {
   const target = normalizeKeyword(keyword);
   if (!target) return false;
 
-  // 숫자·짧은 키워드는 부분 포함으로 판정하면 오답이 정답 처리될 수 있음.
+  // 숫자 키워드는 부분 포함으로 판정하면 오답이 정답 처리될 수 있음.
   // 예: 정답 15인데 150을 정답 처리하는 문제 방지.
-  if (target.length <= 2 || /^\d+$/.test(target)) {
+  if (/^\d+$/.test(target)) {
     const re = new RegExp(`(?:^|[^0-9a-zA-Z가-힣])${escapeRegExp(target)}(?:$|[^0-9a-zA-Z가-힣])`);
     return answer === target || re.test(answer);
   }
