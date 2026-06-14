@@ -19,7 +19,7 @@ const legacyShortAnswerScoringPatch = String.raw`function grS(q,a){
   const hasKeyword=(answer,keyword)=>{
     const target=normalizeAnswer(keyword);
     if(!target)return false;
-    if(target.length<=2||/^\d+$/.test(target)){
+    if(/^\d+$/.test(target)){
       const re=new RegExp("(?:^|[^0-9a-zA-Z가-힣])"+escapeRegExp(target)+"(?:$|[^0-9a-zA-Z가-힣])");
       return answer===target||re.test(answer);
     }
