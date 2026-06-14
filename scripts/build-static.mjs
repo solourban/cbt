@@ -15,7 +15,7 @@ const distQuestionsPath = path.join(dist, 'questions.js');
 
 const legacyShortAnswerScoringPatch = String.raw`function grS(q,a){
   const normalizeAnswer=v=>String(v||"").trim().replace(/\s+/g,"").replace(/[()（）]/g,"").toLowerCase();
-  const escapeRegExp=v=>String(v||"").replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  const escapeRegExp=v=>String(v||"").replace(/[|\\{}()[\]^$+*?.]/g,"\\$&");
   const hasKeyword=(answer,keyword)=>{
     const target=normalizeAnswer(keyword);
     if(!target)return false;
