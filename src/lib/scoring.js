@@ -19,18 +19,18 @@ export function normalizeKeyword(value = "") {
 }
 
 export function escapeRegExp(value = "") {
-  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return String(value).replace(/[|\\{}()[\]^$+*?.]/g, "\\$&");
 }
 
 export function hasKeyword(answer, keyword) {
   const target = normalizeKeyword(keyword);
   if (!target) return false;
 
-  // 숫자 키워드는 부분 포함으로 판정하면 오답이 정답 처리될 수 있음.
-  // 예: 정답 15인데 150을 정답 처리하는 문제 방지.
+  // 숫자 키워드는 150 안의 15처럼 다른 숫자 일부로 맞는 일을 막는다.
+  // 단, 15m/15㎡/15%처럼 단위가 붙는 답안은 인정한다.
   if (/^\d+$/.test(target)) {
-    const re = new RegExp(`(?:^|[^0-9a-zA-Z가-힣])${escapeRegExp(target)}(?:$|[^0-9a-zA-Z가-힣])`);
-    return answer === target || re.test(answer);
+    const re = new RegExp(`(?:^|[^0-9])${escapeRegExp(target)}(?![0-9])`);
+    return re.test(answer);
   }
 
   return answer.includes(target);
