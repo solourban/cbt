@@ -10,7 +10,53 @@ const dist = path.join(root, 'dist');
 
 const requiredFiles = ['index.html', 'config.js'];
 const legacyQuestionsPath = path.join(root, 'questions.js');
+const distIndexPath = path.join(dist, 'index.html');
 const distQuestionsPath = path.join(dist, 'questions.js');
+
+const legacyShortAnswerScoringPatch = String.raw`function grS(q,a){
+  const normalizeAnswer=v=>String(v||"").trim().replace(/\s+/g,"").replace(/[()（）]/g,"").toLowerCase();
+  const escapeRegExp=v=>String(v||"").replace(/[|\\{}()[\]^$+*?.]/g,"\\$&");
+  const hasKeyword=(answer,keyword)=>{
+    const target=normalizeAnswer(keyword);
+    if(!target)return false;
+    if(/^\d+$/.test(target)){
+      const re=new RegExp("(?:^|[^0-9])"+escapeRegExp(target)+"(?![0-9])");
+      return re.test(answer);
+    }
+    return answer.includes(target);
+  };
+  const c=normalizeAnswer(a);
+  const max=q.points||0;
+  if(!c)return{s:0,m:max,fb:[]};
+  const required=q.keywords?.required||[];
+  const bonus=q.keywords?.bonus||[];
+  if(q.acceptedAnswers?.length){
+    for(const accepted of q.acceptedAnswers){
+      if(accepted.every(item=>hasKeyword(c,item)))return{s:max,m:max,fb:["정답입니다!"]};
+    }
+  }
+  const mt=required.filter(item=>hasKeyword(c,item));
+  const ms=required.filter(item=>!hasKeyword(c,item));
+  const bn=bonus.filter(item=>hasKeyword(c,item));
+  const rate=required.length>0?mt.length/required.length:0;
+  const sc=Math.round(max*rate);
+  const fb=[];
+  if(mt.length)fb.push("✓ "+mt.join(", "));
+  if(ms.length)fb.push("✗ "+ms.join(", "));
+  if(bn.length)fb.push("+ "+bn.join(", "));
+  return{s:sc,m:max,fb};
+}`;
+
+function patchLegacyIndexHtml(indexSource) {
+  const patched = indexSource.replace(/function grS\(q,a\)\{.*?\}\nfunction grE\(q,a\)\{/s, `${legacyShortAnswerScoringPatch}\nfunction grE(q,a){`);
+
+  if (patched === indexSource) {
+    console.error('Failed to patch legacy grS function in index.html');
+    process.exit(1);
+  }
+
+  return patched;
+}
 
 fs.rmSync(dist, { recursive: true, force: true });
 fs.mkdirSync(dist, { recursive: true });
@@ -26,6 +72,9 @@ for (const fileName of requiredFiles) {
 
   fs.copyFileSync(source, target);
 }
+
+const legacyIndexSource = fs.readFileSync(distIndexPath, 'utf8');
+fs.writeFileSync(distIndexPath, patchLegacyIndexHtml(legacyIndexSource), 'utf8');
 
 if (!fs.existsSync(legacyQuestionsPath)) {
   console.error('Required file missing: questions.js');
@@ -56,5 +105,6 @@ fs.writeFileSync(distQuestionsPath, mergedQuestionsSource, 'utf8');
 
 console.log('Static legacy build complete.');
 console.log(`Copied files: ${requiredFiles.join(', ')}`);
+console.log('Patched legacy short-answer scoring function: grS');
 console.log(`Merged priority updates into questions.js: ${PRIORITY_QUESTION_UPDATES.length}`);
 console.log(`Selection summary: ${JSON.stringify(MERGE_SELECTION_SUMMARY)}`);
